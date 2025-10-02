@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Package, ArrowRight, XCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
-// Since payment is disabled, we remove the need for Stripe imports.
+// This page now serves as the Order Confirmation/Payment Disabled page.
 
 const PaymentDisabledPage = () => {
   const { orderId } = useParams();
@@ -34,11 +34,11 @@ const PaymentDisabledPage = () => {
           }
         );
         
-        // Use totalPrice from the old model for display, if available
+        // Normalize the order data structure (assuming orderItems and totalPrice)
         const orderData = {
           ...response.data,
-          totalAmount: response.data.totalPrice || 0, // Fallback for total if model changes
-          items: response.data.orderItems || [] // Use orderItems from old model structure
+          totalAmount: response.data.totalPrice || 0,
+          items: response.data.orderItems || []
         };
 
         setOrder(orderData);
@@ -46,7 +46,7 @@ const PaymentDisabledPage = () => {
 
       } catch (err) {
         console.error('Error fetching order details:', err);
-        setError('Failed to load order details. Please check your Orders page.');
+        setError('Failed to load order details. Check your Orders page.');
         toast.error('Failed to load order details.');
       } finally {
         setLoading(false);
@@ -78,7 +78,7 @@ const PaymentDisabledPage = () => {
             Online payment is **TEMPORARILY DISABLED** for deployment purposes.
           </p>
           <p className="text-red-500 mb-6">
-            **Your order has been recorded.** Please proceed to **View All Orders** to track its status (currently *Pending*).
+            **Your order has been recorded.** Please proceed to **Order History** to track its status (currently *Pending*).
           </p>
           
           {error && <p className="text-red-500 mb-4">{error}</p>}
@@ -101,12 +101,13 @@ const PaymentDisabledPage = () => {
           )}
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            {/* BUTTON UPDATED TO SAY "Go to Order History" */}
             <button
               onClick={() => navigate('/orders')}
               className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
             >
               <Package className="w-5 h-5 mr-2" />
-              View All Orders
+              Go to Order History
             </button>
             
             <button

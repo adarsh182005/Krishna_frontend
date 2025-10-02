@@ -1,16 +1,20 @@
 @import "tailwindcss";
 
+@layer base {
+  :root {
+    --primary: 220 89% 51%;
+    --primary-foreground: 210 20% 98%;
+    --secondary: 210 20% 98%;
+    --secondary-foreground: 220 89% 51%;
+    --accent: 0 84.2% 60.2%;
+  }
+}
 
 * {
   font-family: 'Outfit', sans-serif;
-  box-sizing: border-box; /* A best practice for consistent box models */
+  box-sizing: border-box;
 }
 
-/*
- * These are custom styles to ensure the main container for your website's content
- * is centered and has a maximum width, preventing it from looking stretched on
- * very large screens.
- */
 .container {
   max-width: 1280px;
   margin-left: auto;
@@ -19,26 +23,14 @@
   padding-right: 1rem;
 }
 
-/*
- * A simple, classic button style that you can use across your website.
- * This is a good example of an @apply directive, which allows you to create
- * custom, reusable classes with Tailwind's utility classes.
- */
 .btn-primary {
-  @apply bg-blue-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 transition-colors duration-200;
+  @apply bg-red-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-red-700 transition-colors duration-200;
 }
 
-/*
- * These styles define the layout for your testimonial cards,
- * giving them a clean, elevated look with a subtle shadow.
- */
 .testimonial-card {
   @apply bg-white p-6 rounded-lg shadow-lg text-center transition-transform duration-300 hover:scale-105;
 }
 
-/*
- * This is a simple, classic footer style.
- */
 .classic-footer {
   @apply bg-gray-900 text-white py-6 text-center;
 }
