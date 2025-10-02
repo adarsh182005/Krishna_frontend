@@ -9,6 +9,7 @@ import CartPage from './pages/CartPage';
 import PaymentPage from './pages/PaymentPage';
 import OrdersPage from './pages/OrdersPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import ProductDetailPage from './pages/ProductDetailPage'; // New component import
 
 const App = () => {
   return (
@@ -19,6 +20,9 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
+        {/* New Product Detail Page Route */}
+        <Route path="/products/:id" element={<ProductDetailPage />} />
+
         {/* Protected Routes - require authentication */}
         <Route path="/cart" element={
           <ProtectedRoute>
@@ -42,12 +46,7 @@ const App = () => {
           </ProtectedRoute>
         } />
         
-        {/* Remove the original OrderSuccessPage route as it's no longer needed */}
-        {/* <Route path="/order-success/:orderId" element={
-          <ProtectedRoute>
-            <OrderSuccessPage />
-          </ProtectedRoute>
-        } /> */}
+        {/* The original OrderSuccessPage route has been removed. */}
 
       </Routes>
     </Layout>
