@@ -64,24 +64,28 @@ const CartPage = () => {
       // Calculate total
       const totalAmount = parseFloat(calculateTotal());
 
-      // Create order
+      // --- MODIFIED ORDER DATA FOR DISABLED PAYMENT ---
       const orderData = {
         orderItems: cartItems.map(item => ({
           name: item.name,
           qty: item.qty,
           image: item.image,
           price: item.price,
-          product: item._id // Use `product` to match the backend schema
+          product: item._id
         })),
         totalPrice: totalAmount,
-        paymentMethod: 'Stripe', // Assuming a default payment method
-        shippingAddress: { // Placeholder shipping address
+        // Set payment method to reflect the order status, not actual Stripe processing
+        paymentMethod: 'Order Placed - Payment Disabled', 
+        shippingAddress: {
           address: '123 Sweet Street',
           city: 'Candy Town',
           postalCode: '12345',
           country: 'India'
-        }
+        },
+        // Set isPaid to false to mark it as pending payment in the database
+        isPaid: false
       };
+      // ------------------------------------------------
 
       const response = await axios.post(
         `${backendUrl}/api/orders`,
@@ -98,8 +102,8 @@ const CartPage = () => {
       if (response.data._id) {
         // Clear cart after successful order creation
         clearCart();
-        toast.success('Order created successfully!');
-        // Redirect to payment page
+        toast.success('Order placed successfully! Proceeding to confirmation.');
+        // Redirect to the Payment Page, which we will now use as a confirmation page.
         navigate(`/payment/${response.data._id}`);
       }
     } catch (error) {

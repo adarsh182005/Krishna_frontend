@@ -7,7 +7,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import CartPage from './pages/CartPage';
 import PaymentPage from './pages/PaymentPage';
-import OrderSuccessPage from './pages/OrderSuccessPage';
 import OrdersPage from './pages/OrdersPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -27,15 +26,13 @@ const App = () => {
           </ProtectedRoute>
         } />
         
+        {/*
+          This route now serves as the order confirmation page
+          since the payment feature has been disabled.
+        */}
         <Route path="/payment/:orderId" element={
           <ProtectedRoute>
             <PaymentPage />
-          </ProtectedRoute>
-        } />
-        
-        <Route path="/order-success/:orderId" element={
-          <ProtectedRoute>
-            <OrderSuccessPage />
           </ProtectedRoute>
         } />
         
@@ -44,6 +41,14 @@ const App = () => {
             <OrdersPage />
           </ProtectedRoute>
         } />
+        
+        {/* Remove the original OrderSuccessPage route as it's no longer needed */}
+        {/* <Route path="/order-success/:orderId" element={
+          <ProtectedRoute>
+            <OrderSuccessPage />
+          </ProtectedRoute>
+        } /> */}
+
       </Routes>
     </Layout>
   );
