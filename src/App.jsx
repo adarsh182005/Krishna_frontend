@@ -9,7 +9,9 @@ import CartPage from './pages/CartPage';
 import PaymentPage from './pages/PaymentPage';
 import OrdersPage from './pages/OrdersPage';
 import ProtectedRoute from './components/ProtectedRoute';
-import ProductDetailPage from './pages/ProductDetailPage'; // New component import
+import ProductDetailPage from './pages/ProductDetailPage'; 
+// FIX: Explicitly specify the .jsx extension for ProfilePage resolution
+import ProfilePage from './pages/ProfilePage.jsx'; 
 
 const App = () => {
   return (
@@ -20,7 +22,7 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
-        {/* New Product Detail Page Route */}
+        {/* Product Detail Page Route */}
         <Route path="/products/:id" element={<ProductDetailPage />} />
 
         {/* Protected Routes - require authentication */}
@@ -30,10 +32,6 @@ const App = () => {
           </ProtectedRoute>
         } />
         
-        {/*
-          This route now serves as the order confirmation page
-          since the payment feature has been disabled.
-        */}
         <Route path="/payment/:orderId" element={
           <ProtectedRoute>
             <PaymentPage />
@@ -46,7 +44,12 @@ const App = () => {
           </ProtectedRoute>
         } />
         
-        {/* The original OrderSuccessPage route has been removed. */}
+        {/* New Profile Page Route */}
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        } />
 
       </Routes>
     </Layout>

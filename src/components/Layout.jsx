@@ -30,12 +30,18 @@ const Layout = ({ children }) => {
               )}
             </Link>
             {user ? (
-              <button
-                onClick={logout}
-                className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-              >
-                Logout
-              </button>
+              <>
+                {/* New Profile Link for logged-in users */}
+                <Link to="/profile" className="text-gray-600 hover:text-gray-900 transition-colors duration-200 font-semibold">
+                  Profile
+                </Link>
+                <button
+                  onClick={logout}
+                  className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                >
+                  Logout
+                </button>
+              </>
             ) : (
               <>
                 <Link to="/login" className="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">

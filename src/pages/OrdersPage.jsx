@@ -2,35 +2,48 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Package, Eye, Calendar, CreditCard } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'react-hot-toast'; // Import toast for errors/feedback
 
 const OrdersPage = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
+        const token = localStorage.getItem('userToken');
+        if (!token) {
+             // Handle case where token is missing (should be caught by ProtectedRoute, but good fallback)
+            setError('Authentication required to view orders.');
+            setLoading(false);
+            return;
+        }
+
+        // Note: Assuming backend route is /api/orders/myorders (as per general e-commerce convention) 
+        // OR /api/orders. Sticking to /api/orders which the user provided is the current fetch URL.
         const response = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/orders`,
+          `${backendUrl}/api/orders`,
           {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
+              'Authorization': `Bearer ${token}`
             }
           }
         );
-        setOrders(response.data);
+        // The response data is expected to be the user's list of orders
+        setOrders(response.data); 
       } catch (error) {
         console.error('Error fetching orders:', error);
-        setError('Failed to load orders');
+        setError('Failed to load orders. Please check your network connection.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchOrders();
-  }, []);
+  }, [backendUrl]);
 
   const getStatusColor = (status) => {
     const colors = {
@@ -42,6 +55,8 @@ const OrdersPage = () => {
       'cancelled': 'bg-red-100 text-red-800',
       'payment_failed': 'bg-red-100 text-red-800'
     };
+    // Use the simpler 'isDelivered' or 'isPaid' status from the Mongoose model 
+    // until the full status pipeline is implemented in the backend.
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
@@ -64,20 +79,31 @@ const OrdersPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error</h1>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center bg-white p-8 rounded-lg shadow-lg">
+          <h1 className="text-2xl font-bold text-red-600 mb-4">Order History Error</h1>
           <p className="text-gray-600 mb-6">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => navigate('/profile')}
             className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
           >
-            Try Again
+            Go to Profile
           </button>
         </div>
       </div>
     );
   }
+  
+  // Normalize the object structure from the backend (using orderItems and totalPrice)
+  const normalizedOrders = orders.map(order => ({
+      ...order,
+      // Ensure 'items' exists for map function in the component body
+      items: order.orderItems || [], 
+      totalAmount: order.totalPrice || 0,
+      // Use existing status if available, fallback to payment status from old schema
+      status: order.isDelivered ? 'delivered' : (order.isPaid ? 'confirmed' : 'pending'),
+      paymentStatus: order.isPaid ? 'completed' : 'pending' 
+  }));
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -87,7 +113,7 @@ const OrdersPage = () => {
           <p className="text-gray-600">Track and manage your sweet orders</p>
         </div>
 
-        {orders.length === 0 ? (
+        {normalizedOrders.length === 0 ? (
           <div className="bg-white rounded-lg shadow-lg p-8 text-center">
             <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">No Orders Yet</h2>
@@ -101,7 +127,7 @@ const OrdersPage = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {orders.map((order) => (
+            {normalizedOrders.map((order) => (
               <div key={order._id} className="bg-white rounded-lg shadow-lg p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4">
                   <div className="mb-4 lg:mb-0">
@@ -135,10 +161,10 @@ const OrdersPage = () => {
                       {order.items.slice(0, 3).map((item, index) => (
                         <div key={index} className="flex justify-between text-sm">
                           <span className="text-gray-600">
-                            {item.name} × {item.quantity}
+                            {item.name} × {item.quantity || item.qty}
                           </span>
                           <span className="text-gray-900">
-                            ₹{(item.price * item.quantity).toFixed(2)}
+                            ₹{(item.price * (item.quantity || item.qty)).toFixed(2)}
                           </span>
                         </div>
                       ))}
@@ -155,33 +181,22 @@ const OrdersPage = () => {
                       <span className="text-gray-600">Total Amount:</span>
                       <span className="font-semibold text-lg">₹{order.totalAmount.toFixed(2)}</span>
                     </div>
-                    {order.paymentIntentId && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <CreditCard className="w-4 h-4 mr-1" />
-                        Payment ID: {order.paymentIntentId.slice(-10)}
-                      </div>
-                    )}
+                    {/* Hiding paymentIntentId since payment is disabled */}
+                    {/* order.paymentIntentId && (...) */}
                   </div>
                 </div>
 
                 <div className="mt-6 flex flex-col sm:flex-row gap-3">
                   <button
-                    onClick={() => navigate(`/order-success/${order._id}`)}
+                    // Redirect to the Payment Page, which is now the Order Confirmation/Disabled Payment Page
+                    onClick={() => navigate(`/payment/${order._id}`)}
                     className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <Eye className="w-4 h-4 mr-2" />
                     View Details
                   </button>
                   
-                  {order.paymentStatus === 'pending' && (
-                    <button
-                      onClick={() => navigate(`/payment/${order._id}`)}
-                      className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      <CreditCard className="w-4 h-4 mr-2" />
-                      Complete Payment
-                    </button>
-                  )}
+                  {/* Removed Complete Payment button since Stripe is disabled */}
                   
                   {order.status === 'delivered' && (
                     <button className="flex items-center justify-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors">
