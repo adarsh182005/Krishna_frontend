@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { UserContext } from '../context/UserContext'; // Import UserContext
+import { toast } from 'react-hot-toast'; // Use toast for feedback
 
 // import shadcn card components
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
@@ -8,24 +9,27 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login } = useContext(UserContext); // Use the login function from context
   const navigate = useNavigate();
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    setError("");
+    setLoading(true);
 
-    try {
-      const { data } = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/users/login`,
-        { email, password }
-      );
+    // 1. Call the login function provided by the context
+    const result = await login(email, password);
 
-      localStorage.setItem("userToken", data.token);
-      navigate("/"); // Redirect to homepage on successful login
-    } catch (err) {
-      setError(err.response?.data?.message || "Invalid email or password.");
+    if (result.success) {
+      toast.success('Logged in successfully!');
+      // 2. The context already updated the global user state, so we just navigate.
+      navigate("/"); 
+    } else {
+      // 3. Use result.error for specific message from context login function
+      toast.error(result.error || 'Login failed.');
     }
+    
+    setLoading(false);
   };
 
   return (
@@ -35,7 +39,6 @@ const LoginPage = () => {
           <CardTitle className="text-center text-2xl">Login</CardTitle>
         </CardHeader>
         <CardContent>
-          {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           <form onSubmit={submitHandler}>
             <div className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -66,9 +69,10 @@ const LoginPage = () => {
             <CardFooter className="flex justify-center">
               <button
                 type="submit"
-                className="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+                disabled={loading}
+                className="bg-gray-800 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded disabled:bg-gray-500 disabled:cursor-not-allowed"
               >
-                Sign In
+                {loading ? 'Signing In...' : 'Sign In'}
               </button>
             </CardFooter>
           </form>

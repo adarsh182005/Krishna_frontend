@@ -14,7 +14,7 @@ export const UserProvider = ({ children }) => {
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
-        // We create a simple user object to indicate the user is logged in.
+        // We set the state with a minimal user object and the token.
         setUser({ token, id: decodedToken.id });
       } catch (err) {
         console.error("Failed to decode JWT token:", err);
@@ -33,8 +33,16 @@ export const UserProvider = ({ children }) => {
       );
       
       localStorage.setItem('userToken', data.token);
-      // The backend returns the user object, so we set the state with the full user data.
-      setUser({ ...data, token: data.token });
+      
+      // *** CRITICAL FIX: Manually update the state immediately after setting the token ***
+      setUser({ 
+        _id: data._id, 
+        name: data.name, 
+        email: data.email, 
+        isAdmin: data.isAdmin,
+        token: data.token 
+      }); 
+      
       return { success: true };
     } catch (error) {
       // Better error handling for login failures
