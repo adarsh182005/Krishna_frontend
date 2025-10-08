@@ -10,8 +10,8 @@ import PaymentPage from './pages/PaymentPage';
 import OrdersPage from './pages/OrdersPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import ProductDetailPage from './pages/ProductDetailPage'; 
-// FIX: Explicitly specify the .jsx extension for ProfilePage resolution
 import ProfilePage from './pages/ProfilePage.jsx'; 
+import OrderSuccessPage from './pages/OrderSuccessPage.jsx'; // Import the success page
 
 const App = () => {
   return (
@@ -22,10 +22,16 @@ const App = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         
-        {/* Product Detail Page Route */}
         <Route path="/products/:id" element={<ProductDetailPage />} />
 
-        {/* Protected Routes - require authentication */}
+        {/* Add the route for the order success page */}
+        <Route path="/order-success/:orderId" element={
+          <ProtectedRoute>
+            <OrderSuccessPage />
+          </ProtectedRoute>
+        } />
+        
+        {/* Protected Routes */}
         <Route path="/cart" element={
           <ProtectedRoute>
             <CartPage />
@@ -44,7 +50,6 @@ const App = () => {
           </ProtectedRoute>
         } />
         
-        {/* New Profile Page Route */}
         <Route path="/profile" element={
           <ProtectedRoute>
             <ProfilePage />

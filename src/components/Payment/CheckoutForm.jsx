@@ -1,48 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   PaymentElement,
   useStripe,
   useElements
 } from '@stripe/react-stripe-js';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
-const CheckoutForm = ({ orderId, orderTotal, cartItems, onPaymentSuccess }) => {
+const CheckoutForm = ({ orderId, orderTotal }) => {
   const stripe = useStripe();
   const elements = useElements();
+  const navigate = useNavigate();
 
-  const [message, setMessage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [clientSecret, setClientSecret] = useState('');
-
-  useEffect(() => {
-    // Create PaymentIntent as soon as the page loads
-    const createPaymentIntent = async () => {
-      try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/payment/create-payment-intent`,
-          {
-            amount: orderTotal,
-            orderId: orderId,
-            items: cartItems
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          }
-        );
-
-        setClientSecret(response.data.clientSecret);
-      } catch (error) {
-        console.error('Error creating payment intent:', error);
-        setMessage('Failed to initialize payment. Please try again.');
-      }
-    };
-
-    if (orderId && orderTotal && cartItems.length > 0) {
-      createPaymentIntent();
-    }
-  }, [orderId, orderTotal, cartItems]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -59,51 +30,39 @@ const CheckoutForm = ({ orderId, orderTotal, cartItems, onPaymentSuccess }) => {
     });
 
     if (error) {
-      if (error.type === 'card_error' || error.type === 'validation_error') {
-        setMessage(error.message);
-      } else {
-        setMessage('An unexpected error occurred.');
-      }
+      toast.error(error.message || 'An unexpected error occurred.');
+      setIsLoading(false);
     } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-      // Payment succeeded, confirm with backend
       try {
-        const response = await axios.post(
-          `${import.meta.env.VITE_BACKEND_URL}/api/payment/confirm-payment`,
+        const token = localStorage.getItem('userToken');
+        await axios.put(
+          `${import.meta.env.VITE_BACKEND_URL}/api/orders/${orderId}/pay`,
           {
-            paymentIntentId: paymentIntent.id,
-            orderId: orderId
+            id: paymentIntent.id,
+            status: paymentIntent.status,
+            update_time: paymentIntent.created,
+            payer: { email_address: 'default@example.com' } // Placeholder
           },
           {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
 
-        if (response.data.success) {
-          setMessage('Payment succeeded!');
-          onPaymentSuccess && onPaymentSuccess(response.data.order);
-        } else {
-          setMessage('Payment confirmation failed. Please contact support.');
-        }
-      } catch (error) {
-        console.error('Error confirming payment:', error);
-        setMessage('Payment succeeded but confirmation failed. Please contact support.');
+        toast.success('Payment Successful!');
+        navigate(`/order-success/${orderId}`);
+      } catch (err) {
+        toast.error('Payment succeeded, but failed to update order status.');
+        console.error(err);
+        setIsLoading(false);
       }
+    } else {
+        toast.error('Payment was not successful. Please try again.');
+        setIsLoading(false);
     }
-
-    setIsLoading(false);
-  };
-
-  const paymentElementOptions = {
-    layout: 'tabs',
-    paymentMethodOrder: ['card', 'digital_wallet'],
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-6 text-center">Complete Your Payment</h2>
-      
+    <div className="bg-white p-6 rounded-lg shadow-lg">
       <div className="mb-6">
         <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
           <span className="font-medium">Total Amount:</span>
@@ -114,20 +73,15 @@ const CheckoutForm = ({ orderId, orderTotal, cartItems, onPaymentSuccess }) => {
       </div>
 
       <form id="payment-form" onSubmit={handleSubmit}>
-        {clientSecret && (
-          <PaymentElement 
-            id="payment-element" 
-            options={paymentElementOptions}
-          />
-        )}
+        <PaymentElement id="payment-element" />
         
         <button
-          disabled={isLoading || !stripe || !elements || !clientSecret}
+          disabled={isLoading || !stripe || !elements}
           id="submit"
-          className={`w-full mt-6 py-3 px-4 rounded-lg font-medium transition-colors ${
-            isLoading || !stripe || !elements || !clientSecret
-              ? 'bg-gray-300 cursor-not-allowed text-gray-500'
-              : 'bg-blue-600 hover:bg-blue-700 text-white'
+          className={`w-full mt-6 py-3 px-4 rounded-lg font-bold text-white transition-colors ${
+            isLoading || !stripe || !elements
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-red-600 hover:bg-red-700'
           }`}
         >
           <span id="button-text">
@@ -141,17 +95,6 @@ const CheckoutForm = ({ orderId, orderTotal, cartItems, onPaymentSuccess }) => {
             )}
           </span>
         </button>
-
-        {/* Show any error or success messages */}
-        {message && (
-          <div className={`mt-4 p-3 rounded-lg text-center ${
-            message.includes('succeeded') 
-              ? 'bg-green-100 text-green-800 border border-green-200' 
-              : 'bg-red-100 text-red-800 border border-red-200'
-          }`}>
-            {message}
-          </div>
-        )}
       </form>
     </div>
   );

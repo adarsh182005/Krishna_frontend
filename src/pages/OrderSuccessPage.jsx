@@ -14,11 +14,13 @@ const OrderSuccessPage = () => {
     if (!order && orderId) {
       const fetchOrder = async () => {
         try {
+          // CORRECTED KEY
+          const token = localStorage.getItem('userToken'); 
           const response = await axios.get(
             `${import.meta.env.VITE_BACKEND_URL}/api/orders/${orderId}`,
             {
               headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
+                'Authorization': `Bearer ${token}`
               }
             }
           );
@@ -78,20 +80,20 @@ const OrderSuccessPage = () => {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Order Details</h2>
               <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                {order.status || 'Confirmed'}
+                {order.isPaid ? 'Paid' : 'Pending'}
               </span>
             </div>
             
             <div className="space-y-2 text-sm text-gray-600 mb-4">
               <p><span className="font-medium">Order ID:</span> {order._id}</p>
-              <p><span className="font-medium">Payment ID:</span> {order.paymentIntentId}</p>
+              <p><span className="font-medium">Payment ID:</span> {order.paymentResult?.id || 'N/A'}</p>
               <p><span className="font-medium">Order Date:</span> {new Date(order.createdAt).toLocaleDateString()}</p>
             </div>
 
             {/* Items List */}
             <div className="space-y-3">
               <h3 className="font-medium text-gray-900">Items Ordered:</h3>
-              {order.items.map((item, index) => (
+              {order.orderItems.map((item, index) => (
                 <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
                   <div className="flex-1">
                     <p className="font-medium">{item.name}</p>
@@ -106,7 +108,7 @@ const OrderSuccessPage = () => {
             <div className="mt-4 pt-4 border-t border-gray-200">
               <div className="flex justify-between items-center text-lg font-bold">
                 <span>Total Paid:</span>
-                <span className="text-green-600">₹{order.totalAmount.toFixed(2)}</span>
+                <span className="text-green-600">₹{order.totalPrice.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -142,12 +144,6 @@ const OrderSuccessPage = () => {
               Continue Shopping
               <ArrowRight className="w-5 h-5 ml-2" />
             </button>
-          </div>
-
-          {/* Contact Info */}
-          <div className="mt-8 text-center text-sm text-gray-500">
-            <p>Need help with your order?</p>
-            <p>Contact us at <span className="text-blue-600">support@krishnasweets.com</span> or call <span className="text-blue-600">+91-XXXX-XXXX</span></p>
           </div>
         </div>
       </div>
